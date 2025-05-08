@@ -32,37 +32,101 @@ loop do
     print "Address: "
     address = gets.chomp
     puts "Categories: #{Event::CATEGORIES.join(', ')}"
-    print "Category: "
-    category = gets.chomp
-    print "Date and Time (YYYY-MM-DD HH:MM): "
-    datetime = DateTime.parse(gets.chomp)
+
+    category = nil
+    loop do
+      print "Category: "
+      input = gets.chomp
+      if Event::CATEGORIES.include?(input)
+        category = input
+        break
+      else
+        puts "Invalid category. Choose one of: #{Event::CATEGORIES.join(', ')}"
+      end
+    end
+
+    datetime = nil
+    loop do
+      print "Date and Time (YYYY-MM-DD HH:MM): "
+      input = gets.chomp
+      begin
+        datetime = DateTime.parse(input)
+        break
+      rescue ArgumentError
+        puts "Invalid date format. Please use 'YYYY-MM-DD HH:MM'."
+      end
+    end
+
     print "Description: "
     description = gets.chomp
     event_controller.create_event(name, address, category, datetime, description)
+
   when 2
-    event_controller.list_events.each_with_index do |e, i|
+    events = event_controller.list_events
+    if events.empty?
+      puts "No events registered."
+    else
+      events.each_with_index do |e, i|
+        puts "#{i + 1} - #{e.name} (#{e.category}) - #{e.datetime.strftime('%d/%m %H:%M')}"
+      end
+    end
+
+  when 3
+    events = event_controller.list_events
+    events.each_with_index do |e, i|
       puts "#{i + 1} - #{e.name} (#{e.category}) - #{e.datetime.strftime('%d/%m %H:%M')}"
     end
-  when 3
     print "Event number to join: "
     index = gets.chomp.to_i - 1
-    event_controller.confirm_participation(index)
+    if index >= 0 && index < events.size
+      event_controller.confirm_participation(index)
+    else
+      puts "Invalid event number."
+    end
+
   when 4
+    my_events = event_controller.my_events
+    my_events.each_with_index do |e, i|
+      puts "#{i + 1} - #{e.name} on #{e.datetime.strftime('%d/%m %H:%M')}"
+    end
     print "Event number to cancel: "
     index = gets.chomp.to_i - 1
-    event_controller.cancel_participation(index)
+    if index >= 0 && index < my_events.size
+      event = my_events[index]
+      event_index = event_controller.list_events.index(event)
+      event_controller.cancel_participation(event_index)
+    else
+      puts "Invalid event number."
+    end
+
   when 5
     puts "Your confirmed events:"
     event_controller.my_events.each { |e| puts "#{e.name} on #{e.datetime.strftime('%d/%m %H:%M')}" }
+
   when 6
     puts "Events happening now:"
-    event_controller.happening_now.each { |e| puts "#{e.name} is happening now!" }
+    events = event_controller.happening_now
+    if events.empty?
+      puts "No events are happening now."
+    else
+      events.each { |e| puts "#{e.name} is happening now!" }
+    end
+
   when 7
     puts "Past events:"
-    event_controller.past_events.each { |e| puts "#{e.name} happened on #{e.datetime.strftime('%d/%m %H:%M')}" }
+    events = event_controller.past_events
+    if events.empty?
+      puts "No past events."
+    else
+      events.each { |e| puts "#{e.name} happened on #{e.datetime.strftime('%d/%m %H:%M')}" }
+    end
+
   when 8
     event_controller.save
     puts "Exiting the system. Goodbye!"
     break
+
+  else
+    puts "Invalid option. Please choose a number between 1 and 8."
   end
 end
