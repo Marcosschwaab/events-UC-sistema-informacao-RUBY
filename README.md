@@ -131,7 +131,7 @@ The `EventStorage` module handles saving and loading events:
 Run the test suite with:
 
 ```
-bundle exec rspec
+rspec
 ```
 
 ## Future Enhancements
